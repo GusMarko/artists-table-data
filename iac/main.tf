@@ -66,14 +66,10 @@ resource "aws_iam_role" "main" {
 data "aws_iam_policy_document" "dynamodb_access" {
   statement {
     actions = [
-      "dynamodb:*",
-      "dynamodb:GetRecords",
-      "dynamodb:GetShardIterator",
-      "dynamodb:DescribeStream",
-      "dynamodb:ListStreams"
+      "dynamodb:*"
 
     ]
-    resources = [data.aws_dynamodb_table.artists.arn]
+    resources = [data.aws_dynamodb_table.artists.arn, data.aws_dynamodb_table.artists.stream_arn]
     effect    = "Allow"
   }
 }
