@@ -28,3 +28,4 @@ def log_new_artists(record):
             print(f"New artist added: {artist_name}")
         else:
             print("Artist name not found in the new image")
+    # aa
