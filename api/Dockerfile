@@ -1,6 +1,6 @@
 FROM public.ecr.aws/lambda/python:3.9
 
-ARG APP_PATH=lamda_handler.py
+ARG APP_PATH=lambda_handler.py
 ARG REQ_PATH=requirements.txt
 COPY ${APP_PATH} ${LAMBDA_TASK_ROOT} 
 COPY ${REQ_PATH} ${LAMBDA_TASK_ROOT}
