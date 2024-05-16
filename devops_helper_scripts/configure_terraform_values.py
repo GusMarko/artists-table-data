@@ -45,6 +45,7 @@ def replace_tfvars(env, boto3_session):
     tfvars = tfvars.replace("access_key_placeholder", access_key)
     tfvars = tfvars.replace("secret_key_placeholder", secret_key)
     tfvars = tfvars.replace("env_placeholder", env)
+    tfvars = tfvars.replace("image_uri_placeholder", image)
     with open(tfvars_path, "w") as f:
         f.write(tfvars)
 
