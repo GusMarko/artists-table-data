@@ -10,11 +10,11 @@ data "aws_dynamodb_table" "artists" {
 }
 
 data "aws_ssm_parameter" "priv_sub_id" {
-  name = "/vpc/${var.env}/private_subnet/id"
+  name = "/vpc/dev/private_subnet/id"
 }
 
 data "aws_ssm_parameter" "vpc_id" {
-  name = "/vpc/${var.env}/id"
+  name = "/vpc/dev/id"
 }
 
 
