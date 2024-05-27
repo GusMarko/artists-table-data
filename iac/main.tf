@@ -5,8 +5,8 @@
 
 
 
-data "aws_dynamodb_table" "artists" {
-  name = "project1-artists-${var.env}"
+data "aws_s3_bucket" "artists" {
+  bucket = "project1-artists-${var.env}"
 }
 
 data "aws_ssm_parameter" "priv_sub_id" {
@@ -54,6 +54,29 @@ data "aws_iam_policy_document" "assume_policy" {
   }
 }
 
+resource "aws_s3_bucket_policy" "allow_access_from_second_lambda" {
+  bucket = data.aws_s3_bucket.artists.id
+  policy = data.aws_iam_policy_document.allow_access_from_second_lambda.json
+}
+
+data "aws_iam_policy_document" "allow_access_from_second_lambda" {
+  statement {
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::381492201388:role/project1-artists-table-data-dev"]
+    }
+
+    actions = [
+      "s3:GetObject",
+      "s3:ListBucket",
+    ]
+
+    resources = [
+      aws_s3_bucket.example.arn,
+      "${aws_s3_bucket.example.arn}/*",
+    ]
+  }
+}
 
 
 resource "aws_iam_role" "main" {
@@ -61,28 +84,6 @@ resource "aws_iam_role" "main" {
   name               = "project1-artists-table-data-${var.env}"
   assume_role_policy = data.aws_iam_policy_document.assume_policy.json
 
-}
-
-data "aws_iam_policy_document" "dynamodb_access" {
-  statement {
-    actions = [
-      "dynamodb:*"
-
-    ]
-    resources = [data.aws_dynamodb_table.artists.arn, data.aws_dynamodb_table.artists.stream_arn]
-    effect    = "Allow"
-  }
-}
-
-
-resource "aws_iam_policy" "dynamodb_access" {
-  name   = "project1-artists-table-data-dynamodb-access-${var.env}"
-  policy = data.aws_iam_policy_document.dynamodb_access.json
-}
-
-resource "aws_iam_role_policy_attachment" "dynamodb_access" {
-  role       = aws_iam_role.main.name
-  policy_arn = aws_iam_policy.dynamodb_access.arn
 }
 
 resource "aws_iam_role_policy_attachment" "vpc_policy_for_lambda" {
@@ -104,7 +105,7 @@ resource "aws_lambda_function" "main" {
 
   environment {
     variables = {
-      ARTISTS_TABLE = data.aws_dynamodb_table.artists.id
+      ARTISTS_BUCKET = "project1-artists-${env.var}"
     }
   }
 
@@ -117,10 +118,22 @@ resource "aws_lambda_function" "main" {
 
 
 # podesavanje trigera
-
-resource "aws_lambda_event_source_mapping" "allow_dynamodb_table_to_trigger_lambda" {
-  event_source_arn  = data.aws_dynamodb_table.artists.stream_arn
-  function_name     = aws_lambda_function.main.arn
-  starting_position = "LATEST"
+resource "aws_lambda_permission" "allow_bucket" {
+  statement_id  = "AllowExecutionFromS3Bucket"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.main.arn
+  principal     = "s3.amazonaws.com"
+  source_arn    = data.aws_s3_bucket.artists.arn
 }
 
+resource "aws_s3_bucket_notification" "bucket_notification" {
+  bucket = data.aws_s3_bucket.artists.id
+
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.main.arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_suffix       = ".txt"
+  }
+
+  depends_on = [aws_lambda_permission.allow_bucket]
+}
