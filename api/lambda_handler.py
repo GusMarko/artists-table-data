@@ -9,6 +9,7 @@ import urllib.parse
 
 
 def lambda_handler(event, context):
+    s3 = boto3.client("s3")
 
     bucket = event["Records"][0]["s3"]["bucket"]["name"]
     key = urllib.parse.unquote_plus(
