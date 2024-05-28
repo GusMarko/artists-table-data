@@ -72,8 +72,8 @@ data "aws_iam_policy_document" "allow_access_from_second_lambda" {
     ]
 
     resources = [
-      aws_s3_bucket.example.arn,
-      "${aws_s3_bucket.example.arn}/*",
+      data.aws_s3_bucket.artists.arn,
+      "${data.aws_s3_bucket.artists.arn}/*",
     ]
   }
 }
@@ -105,7 +105,7 @@ resource "aws_lambda_function" "main" {
 
   environment {
     variables = {
-      ARTISTS_BUCKET = "project1-artists-${env.var}"
+      ARTISTS_BUCKET = "project1-artists-${var.env}"
     }
   }
 
